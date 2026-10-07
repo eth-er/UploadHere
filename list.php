@@ -33,6 +33,25 @@
 // 1. Check session for user authentication if not authenticated redirect to login.php
 // 2. If authenticated display the list of uploaded files in a table format with the following columns: File Name, Size, Date Uploaded, Actions (Download/Delete)
 // 3. makesure just show data from the logged in user
+
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php?error=" . urlencode("Please login first"));
+    exit();
+}
+
+require_once "db.php";
+
+$userId = $_SESSION['user_id'];
+
+$sql = "SELECT * FROM files WHERE user_id = ?";
+
+$statement = $connection->prepare($sql);
+$statement->bind_param("i", $userId);
+$statement->execute();
+$result = $statement->get_result();
+
 ?>
 
 <body class="py-5">
@@ -59,38 +78,35 @@
                                         <th scope="col" class="text-end pe-4 py-3">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- List of uploaded files will be populated here you can delete it after implementing the backend logic -->
-                                    <!-- Dummy Data 1 -->
-                                    <tr>
-                                        <td class="ps-4 py-3 text-white">document_secret.pdf</td>
-                                        <td class="py-3 text-white-50">2.4 MB</td>
-                                        <td class="py-3 text-white-50">Sep 04, 2026</td>
-                                        <td class="text-end pe-4 py-3">
-                                            <a href="#" class="btn btn-sm btn-outline-info me-1">Download</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-                                        </td>
-                                    </tr>
-                                    <!-- Dummy Data 2 -->
-                                    <tr>
-                                        <td class="ps-4 py-3 text-white">image_backup.png</td>
-                                        <td class="py-3 text-white-50">5.1 MB</td>
-                                        <td class="py-3 text-white-50">Sep 02, 2026</td>
-                                        <td class="text-end pe-4 py-3">
-                                            <a href="#" class="btn btn-sm btn-outline-info me-1">Download</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-                                        </td>
-                                    </tr>
-                                    <!-- Dummy Data 3 -->
-                                    <tr>
-                                        <td class="ps-4 py-3 text-white">archive_data.zip</td>
-                                        <td class="py-3 text-white-50">128 MB</td>
-                                        <td class="py-3 text-white-50">Aug 28, 2026</td>
-                                        <td class="text-end pe-4 py-3">
-                                            <a href="#" class="btn btn-sm btn-outline-info me-1">Download</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-                                        </td>
-                                    </tr>
+                                <tbody> 
+                                    <!-- pengganti dummy -->
+                                    <?php while ($file = $result->fetch_assoc()): ?>
+
+                                        <tr>
+                                            <td class="ps-4 py-3 text-white">
+                                                <?= htmlspecialchars($file['original_name']) ?>
+                                            </td>
+
+                                            <td class="py-3 text-white-50">
+                                                    <?= round($file['file_size'] / 1024 / 1024, 2) ?> MB
+                                            </td>
+
+                                            <td class="py-3 text-white-50">
+                                                <?= htmlspecialchars($file['uploaded_at']) ?>
+                                            </td>
+
+                                            <td class="text-end pe-4 py-3">
+                                                <a href="#" class="btn btn-sm btn-outline-info me-1">
+                                                    Download
+                                                </a>
+
+                                                <a href="#" class="btn btn-sm btn-outline-danger">
+                                                    Delete
+                                                </a>
+                                            </td>
+                                        </tr>
+
+                                    <?php endwhile; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -98,7 +114,9 @@
                 </div>
                 
                 <div class="text-center mt-4">
-                    <p class="text-white-50 small">Showing 3 files in your vault.</p>
+                    <p class="text-white-50 small"> 
+                        Showing <?= $result->num_rows ?> files in your vault.
+                    </p>
                 </div>
             </div>
         </div>
